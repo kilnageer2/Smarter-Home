@@ -39,7 +39,8 @@ public class SimpleMqttClient implements MqttCallback {
 	public void deliveryComplete(IMqttDeliveryToken token) {
 		try {
 			MqttMessage message = token.getMessage();
-			System.out.println("Pub complete" + new String(message.getPayload()));			
+			// message is null on success
+			System.out.println("Pub complete");			
 		} catch (MqttException e) {
 			System.out.println("Exception #3 is "+e);
 		}
@@ -52,10 +53,14 @@ public class SimpleMqttClient implements MqttCallback {
 	 * This callback is invoked when a message is received on a subscribed topic.
 	 * 
 	 */
+	
+	//@@ TODO LOt's of work to parse messages into an internal array which is then used to publish
+	//@@ updates to the MQTT broker at house/room/sensor/reading { value, units, timestampp }
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
+		String msg = new String(message.getPayload());
 		System.out.println("-------------------------------------------------");
 		System.out.println("| Topic:" + topic);
-		System.out.println("| Message: " + new String(message.getPayload()));
+		System.out.println("| Message: " + msg);
 		System.out.println("-------------------------------------------------");
 	}
 
@@ -112,21 +117,29 @@ public class SimpleMqttClient implements MqttCallback {
 		
 		System.out.println("Connected to " + broker);
 
+		// @@TODO Let's get these topics to subscribe to from an external array
+		
 		// setup topic
 		// topics on m2m.io are in the form <domain>/<stuff>/<thing>
-		String myTopic = "stat/tasmota_zbbridge_0576A9/STATUS";
-		MqttTopic topic = myClient.getTopic(myTopic);
+		String myTopics[] = { 
+				"stat/tasmota_zbbridge_0576A9/STATUS",
+				"tele/tasmota_zbbridge_0576A9/SENSOR" };
+		
 
 		// subscribe to topic if subscriber
-		if (subscriber) {
+		for (String myTopic: myTopics) {
 			try {
 				int subQoS = 0;
+				MqttTopic topic = myClient.getTopic(myTopic);
 				myClient.subscribe(myTopic, subQoS);
+				System.out.println("Subscribed to " + myTopic);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
+		// @@TODO Let's get these topics to publish to from an external array
+		
 		// publish messages if publisher
 		if (publisher) {
 			for (int i=1; i<=1; i++) {
@@ -154,11 +167,13 @@ public class SimpleMqttClient implements MqttCallback {
 			}			
 		}
 		
+		// @@TODO Should we ever leave? Why not just poll static arrays for work?
+		
 		// disconnect
 		try {
 			// wait to ensure subscribed messages are delivered
 			if (subscriber) {
-				Thread.sleep(5000);
+				Thread.sleep(20 * 1000); // Let code run for 20 seconds
 			}
 			myClient.disconnect();
 		} catch (Exception e) {

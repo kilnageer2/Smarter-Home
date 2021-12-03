@@ -86,7 +86,7 @@ public class App {
                     	System.out.println("DeviceName is "+DeviceName);
                     }
                     catch (Exception e ) {
-                    	System.out.println("Exception is "+e);
+                    	System.out.println("Exception #1 is "+e);
                     }
                 }
                 
@@ -114,7 +114,7 @@ public class App {
                     	System.out.println("localTemperature for TRV 0xEE12 is "+localTemperature);
                     }
                     catch (Exception e ) {
-                    	System.out.println("Exception is "+e);
+                    	System.out.println("Exception #2 is "+e);
                     }
                 }
                 	
@@ -130,10 +130,9 @@ public class App {
                 });
                 */
                 
-            }
-        });
+        };
     	
-    	
+    	/*
     	
         // listen for operations
         client.subscribe("tele/tasmota_zbbridge_0576A9/SENSOR", new IMqttMessageListener() {
@@ -141,7 +140,7 @@ public class App {
                 final String payload = new String(message.getPayload());
 
                 //System.out.println("Received operation " + payload);
-                if (payload.contains("0xEE12")) {
+                if (payload.contains("{")) {
                     // execute the operation in another thread to allow the MQTT client to
                     // finish processing this message and acknowledge receipt to the server
                 	
@@ -156,6 +155,8 @@ public class App {
                     });
                 }
             }
+            */
+    	
         });
         
         

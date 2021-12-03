@@ -1,5 +1,12 @@
 package mqttTest;
 
+import java.io.FileReader;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.*;
 
 import org.eclipse.paho.client.mqttv3.*;
 import java.util.concurrent.*;
@@ -40,20 +47,89 @@ public class App {
                 final String payload = new String(message.getPayload());
 
                 System.out.println("Received operation " + payload);
-                if (payload.startsWith("{")) {
+                if (payload.contains("Tasmota_ZbBridge")) {
                     // execute the operation in another thread to allow the MQTT client to
                     // finish processing this message and acknowledge receipt to the server
                 	
-                	// I think this thread should update a counter to let people know it is 
-                	// alive and then publish every in an area of topics / data
-                	//
-                    Executors.newSingleThreadScheduledExecutor().execute(new Runnable() {
-                        public void run() {
-                            System.out.println("Recieved topic:"+topic+", payload:"+payload);
-                            System.out.println("...done");
-                        }
-                    });
+                	
+                	// {"Status":
+                	//   {"Module":75,
+                	//    "DeviceName":"Tasmota_ZbBridge",
+                	//    "FriendlyName":["Tasmota_ZbBridge"],
+                	//    "Topic":"tasmota_zbbridge_0576A9",
+                	//    "ButtonTopic":"0",
+                	//    "Power":0,
+                	//    "PowerOnState":3,
+                	//    "LedState":1,
+                	//    "LedMask":"FFFF",
+                	//    "SaveData":1,
+                	//    "SaveState":1,
+                	//    "SwitchTopic":"0",
+                	//    "SwitchMode":[0,0,0,0,0,0,0,0],
+                	//    "ButtonRetain":0,
+                	//    "SwitchRetain":0,
+                	//    "SensorRetain":0,
+                	//    "PowerRetain":0,
+                	//    "InfoRetain":0,
+                	//    "StateRetain":0}
+                	// }
+
+                    Object obj = new JSONParser().parse( payload );
+                      
+                    // typecasting obj to JSONObject
+                    JSONObject jo = (JSONObject) obj;
+                   
+                    
+                    try {
+                    	JSONObject jos = (JSONObject)jo.get("Status");
+                    	String DeviceName = (String) jos.get("DeviceName");
+                    	System.out.println("DeviceName is "+DeviceName);
+                    }
+                    catch (Exception e ) {
+                    	System.out.println("Exception is "+e);
+                    }
                 }
+                
+                if (payload.contains("ZbReceived")) {
+                	// {"ZbReceived":
+                	//   {"0xEE12":
+                	//      {"Device":"0xEE12",
+                	//       "Name":"\"TRV_Front_Bedroom\"",
+                	//       "LocalTemperature":3,
+                	//       "Endpoint":1,
+                	//       "LinkQuality":47}
+                	//   }
+                	// }
+                	// parsing file "JSONExample.json"
+                    Object obj = new JSONParser().parse( payload );
+                      
+                    // typecasting obj to JSONObject
+                    JSONObject jo = (JSONObject) obj;
+                        
+                    // getting fields of interest
+                    try {
+                    	JSONObject joz = (JSONObject)jo.get("ZbReceived");
+                    	JSONObject jod = (JSONObject)joz.get("0xEE12");
+                    	String localTemperature = (String) joz.get("LocalTemperature");
+                    	System.out.println("localTemperature for TRV 0xEE12 is "+localTemperature);
+                    }
+                    catch (Exception e ) {
+                    	System.out.println("Exception is "+e);
+                    }
+                }
+                	
+                // I think this thread should update a counter to let people know it is 
+            	// alive and then publish every in an area of topics / data
+            	//
+                /*
+                Executors.newSingleThreadScheduledExecutor().execute(new Runnable() {
+                    public void run() {
+                        System.out.println("Recieved topic:"+topic+", payload:"+payload);
+                        System.out.println("...done");
+                    }
+                });
+                */
+                
             }
         });
     	

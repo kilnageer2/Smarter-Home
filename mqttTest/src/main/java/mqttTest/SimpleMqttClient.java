@@ -6,7 +6,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 
-
 public class SimpleMqttClient implements MqttCallback {
 
 	MqttClient myClient;
@@ -128,20 +127,31 @@ public class SimpleMqttClient implements MqttCallback {
 	        // typecasting obj to JSONObject
 	        JSONObject jo = (JSONObject) obj;
 	            
-	        String zbDeviceAdresses[] = { "0x210E", "0xFC59", "0xF4C0", "0x032C",
-	        								"0x6E33", "0xD86E", "0x279D", "0x8F12",
-	        								"0xD46A", "0xEF0E","0xC327", "0x6568",
-	        								"0x9E81", "0xE351", "0xFC8C", "0xACF0",
-	        								"0x8C29", "0xEE12", "0x9E77" };
-	        
+        
 	        // getting fields of interest
 	        try {
 	        	JSONObject joz = (JSONObject)jo.get("ZbReceived");
-	        	for (String zbAddress: zbDeviceAdresses) {
-	        		JSONObject jod = (JSONObject)joz.get( zbAddress );
+	        	for (ZigbeeDevice device: ZigbeeDevice.devices) {
+	        		if (device == null) break; // Remember it's not a full array
+	        		JSONObject jod = (JSONObject)joz.get( device.address );
 	        		if (jod != null) {
-	    	        	String localTemperature = (String) joz.get("LocalTemperature");
-	    	        	System.out.println("localTemperature for TRV "+zbAddress+" is "+localTemperature);	        			
+	        			String temperature = null;
+	        			switch (device.type) {
+	        				case TUYA_TRV:
+	        					temperature = jod.get("LocalTemperature").toString();
+	        					System.out.println("TUYA_TRV temperature: "+ temperature );
+	        					break;
+	        				case SNZB_02:
+	        					temperature = jod.get("Temperature").toString();
+	        					System.out.println("SNZB_02 temperature: "+ temperature );
+	        					break;	      
+	        			}
+	        			if (temperature != null) {
+        					SensorReading reading = new SensorReading( temperature, "C" );
+        					DatabaseManager.setSensorData( 	device.house, device.room, device.type, Sensor.TEMPERATURE, reading);
+    	    	        	System.out.println("temperature reading for "+device.type+" "+device.address+" is "+temperature);	
+	        			}
+        			
 	        			break;
 	        		}
 	        	}

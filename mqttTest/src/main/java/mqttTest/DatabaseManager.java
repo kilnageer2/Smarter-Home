@@ -26,8 +26,9 @@ enum Room {
 
 
 enum SensorType {
-	SNZB_02,  // Temperature and humidity
-	TOLA
+	SNZB_02,  		// Temperature and humidity
+	TUYA_TRV,		// Can turn on/off and set temperature, reports valve and temperature
+	RGB_LED_STRIP, 	// Can control RGB colour
 }
 
 enum Sensor {
@@ -47,14 +48,15 @@ public class DatabaseManager {
 	static final int MAX_SENSOR_TYPES = SensorType.values().length;
 	static final int MAX_SENSORS = Sensor.values().length;	
 
-	SensorReading sensorData[][][][] = new SensorReading[MAX_HOUSES][MAX_ROOMS][MAX_SENSOR_TYPES][MAX_SENSORS];
+	static SensorReading sensorData[][][][] = new SensorReading[MAX_HOUSES][MAX_ROOMS][MAX_SENSOR_TYPES][MAX_SENSORS];
 	
-	public void setSensorData( int house, int room, int type, int sensor, SensorReading data) {
-		sensorData[house][room][type][sensor] = data;
+	public static void setSensorData( House house, Room room, SensorType type, Sensor sensor, SensorReading data) {
+		sensorData[house.ordinal()][room.ordinal()][type.ordinal()][sensor.ordinal()] = data;
+		System.out.println("Set database entry to: "+data.toString());	        			
 	}
 	
-	public SensorReading getSensorData( int house, int room, int type, int sensor ) {
-		return sensorData[house][room][type][sensor];
+	public static SensorReading getSensorData( House house, Room room, SensorType type, Sensor sensor ) {
+		return sensorData[house.ordinal()][room.ordinal()][type.ordinal()][sensor.ordinal()];
 	}	
 }
 

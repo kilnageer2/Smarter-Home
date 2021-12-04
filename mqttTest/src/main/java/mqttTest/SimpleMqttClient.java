@@ -135,21 +135,51 @@ public class SimpleMqttClient implements MqttCallback {
 	        		if (device == null) break; // Remember it's not a full array
 	        		JSONObject jod = (JSONObject)joz.get( device.address );
 	        		if (jod != null) {
-	        			String temperature = null;
+	        			String value = null;
+	        			Sensor sensor = Sensor.TEMPERATURE; // Default
+	        			String units = "C"; // Default
 	        			switch (device.type) {
 	        				case TUYA_TRV:
-	        					temperature = jod.get("LocalTemperature").toString();
-	        					System.out.println("TUYA_TRV temperature: "+ temperature );
+	        					if (msg.contains("LocalTemperature")) {
+	        						value = jod.get("LocalTemperature").toString();
+	        						sensor = Sensor.TEMPERATURE;
+		        					System.out.println("TUYA_TRV temperature: "+ value );
+	        					}
+	        					if (msg.contains("TuyaTempTarget")) {
+	        						value = jod.get("TuyaTempTarget").toString();
+	        						sensor = Sensor.TUYA_TARGET_TEMPERATURE;
+		        					System.out.println("TUYA_TRV TuyaTempTarget: "+ value );
+	        					}
+	        					if (msg.contains("TuyaPreset")) {
+	        						value = jod.get("TuyaPreset").toString();
+	        						sensor = Sensor.TUYA_PRESET_VALUE;
+	        						units = "index";
+		        					System.out.println("TUYA_TRV TuyaPreset: "+ value );
+	        					}	  
+	        					if (msg.contains("TuyaForceMode")) {
+	        						value = jod.get("TuyaForceMode").toString();
+	        						sensor = Sensor.TUYA_FORCE_MODE;
+	        						units = "binary";
+		        					System.out.println("TUYA_TRV TuyaForceMode: "+ value );
+	        					}	
+	        					if (msg.contains("TuyaValvePosition")) {
+	        						value = jod.get("TuyaValvePosition").toString();
+	        						sensor = Sensor.TUYA_VALVE_POSITION;
+	        						units = "%";
+		        					System.out.println("TUYA_TRV TuyaValvePosition: "+ value );
+	        					}	
+	        					
 	        					break;
 	        				case SNZB_02:
-	        					temperature = jod.get("Temperature").toString();
-	        					System.out.println("SNZB_02 temperature: "+ temperature );
+	        					value = jod.get("Temperature").toString();
+	        					sensor = Sensor.TEMPERATURE;	        					
+	        					System.out.println("SNZB_02 temperature: "+ value );
 	        					break;	      
 	        			}
-	        			if (temperature != null) {
-        					SensorReading reading = new SensorReading( temperature, "C" );
-        					DatabaseManager.setSensorData( 	device.house, device.room, device.type, Sensor.TEMPERATURE, reading);
-    	    	        	System.out.println("temperature reading for "+device.type+" "+device.address+" is "+temperature);	
+	        			if (value != null) {
+        					SensorReading reading = new SensorReading( value, units );
+        					DatabaseManager.setSensorData( 	device.house, device.room, device.type, sensor, reading);
+    	    	        	System.out.println("Value reading for "+device.type+" "+device.address+" is "+value+" "+units);	
 	        			}
         			
 	        			break;

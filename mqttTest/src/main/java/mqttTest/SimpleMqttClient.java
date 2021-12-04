@@ -2,6 +2,11 @@ package mqttTest;
 
 import org.eclipse.paho.client.mqttv3.*;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.*;
+
+
 public class SimpleMqttClient implements MqttCallback {
 
 	MqttClient myClient;
@@ -62,6 +67,95 @@ public class SimpleMqttClient implements MqttCallback {
 		System.out.println("| Topic:" + topic);
 		System.out.println("| Message: " + msg);
 		System.out.println("-------------------------------------------------");
+
+	    System.out.println("Received operation " + msg);
+	    if (msg.contains("Tasmota_ZbBridge")) {
+	        // execute the operation in another thread to allow the MQTT client to
+	        // finish processing this message and acknowledge receipt to the server
+	    	
+	    	
+	    	// {"Status":
+	    	//   {"Module":75,
+	    	//    "DeviceName":"Tasmota_ZbBridge",
+	    	//    "FriendlyName":["Tasmota_ZbBridge"],
+	    	//    "Topic":"tasmota_zbbridge_0576A9",
+	    	//    "ButtonTopic":"0",
+	    	//    "Power":0,
+	    	//    "PowerOnState":3,
+	    	//    "LedState":1,
+	    	//    "LedMask":"FFFF",
+	    	//    "SaveData":1,
+	    	//    "SaveState":1,
+	    	//    "SwitchTopic":"0",
+	    	//    "SwitchMode":[0,0,0,0,0,0,0,0],
+	    	//    "ButtonRetain":0,
+	    	//    "SwitchRetain":0,
+	    	//    "SensorRetain":0,
+	    	//    "PowerRetain":0,
+	    	//    "InfoRetain":0,
+	    	//    "StateRetain":0}
+	    	// }
+
+	        Object obj = new JSONParser().parse( msg );
+	          
+	        // typecasting obj to JSONObject
+	        JSONObject jo = (JSONObject) obj;
+	       
+	        
+	        try {
+	        	JSONObject jos = (JSONObject)jo.get("Status");
+	        	String DeviceName = (String) jos.get("DeviceName");
+	        	System.out.println("DeviceName is "+DeviceName);
+	        }
+	        catch (Exception e ) {
+	        	System.out.println("Exception #1 is "+e);
+	        }
+	    }
+	    
+	    if (msg.contains("ZbReceived")) {
+	    	// {"ZbReceived":
+	    	//   {"0xEE12":
+	    	//      {"Device":"0xEE12",
+	    	//       "Name":"\"TRV_Front_Bedroom\"",
+	    	//       "LocalTemperature":3,
+	    	//       "Endpoint":1,
+	    	//       "LinkQuality":47}
+	    	//   }
+	    	// }
+	    	// parsing file "JSONExample.json"
+	        Object obj = new JSONParser().parse( msg );
+	          
+	        // typecasting obj to JSONObject
+	        JSONObject jo = (JSONObject) obj;
+	            
+	        String zbDeviceAdresses[] = { "0x210E", "0xFC59", "0xF4C0", "0x032C",
+	        								"0x6E33", "0xD86E", "0x279D", "0x8F12",
+	        								"0xD46A", "0xEF0E","0xC327", "0x6568",
+	        								"0x9E81", "0xE351", "0xFC8C", "0xACF0",
+	        								"0x8C29", "0xEE12", "0x9E77" };
+	        
+	        // getting fields of interest
+	        try {
+	        	JSONObject joz = (JSONObject)jo.get("ZbReceived");
+	        	for (String zbAddress: zbDeviceAdresses) {
+	        		JSONObject jod = (JSONObject)joz.get( zbAddress );
+	        		if (jod != null) {
+	    	        	String localTemperature = (String) joz.get("LocalTemperature");
+	    	        	System.out.println("localTemperature for TRV "+zbAddress+" is "+localTemperature);	        			
+	        			break;
+	        		}
+	        	}
+
+	        }
+	        catch (Exception e ) {
+	        	System.out.println("Exception #2 is "+e);
+	        }
+	    }
+	    	
+	    // I think this thread should update a counter to let people know it is 
+		// alive and then publish every in an area of topics / data
+		//
+		
 	}
 
 	/**
@@ -173,7 +267,7 @@ public class SimpleMqttClient implements MqttCallback {
 		try {
 			// wait to ensure subscribed messages are delivered
 			if (subscriber) {
-				Thread.sleep(20 * 1000); // Let code run for 20 seconds
+				Thread.sleep(60 * 1000); // Let code run for 60 seconds
 			}
 			myClient.disconnect();
 		} catch (Exception e) {
